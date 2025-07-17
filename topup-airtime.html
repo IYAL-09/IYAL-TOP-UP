@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>IYAL DATA - Buy Airtime</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #ffffff;
+      color: #333;
+    }
+    .container {
+      max-width: 480px;
+      margin: auto;
+      padding: 20px;
+    }
+    .logo {
+      text-align: center;
+      font-size: 30px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    .logo span {
+      color: #ff6600;
+      font-size: 36px;
+    }
+    h2 {
+      text-align: center;
+      color: #002b5c;
+      margin-bottom: 10px;
+    }
+    input, select, button {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+    .networks {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      margin: 20px 0;
+      gap: 10px;
+    }
+    .network {
+      flex: 1 1 45%;
+      text-align: center;
+      padding: 10px;
+      border: 2px solid #ccc;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    .network.selected {
+      border-color: #0074d9;
+      background-color: #e6f0ff;
+    }
+    .network img {
+      width: 50px;
+      height: 50px;
+    }
+    .btn {
+      background-color: #0074d9;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .btn:hover {
+      background-color: #005fa3;
+    }
+    .msg {
+      text-align: center;
+      font-size: 14px;
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo"><span>I</span>YAL DATA</div>
+    <h2>Buy Airtime</h2>
+
+    <input type="tel" id="phone" placeholder="Enter phone number" required />
+
+    <div class="networks">
+      <div class="network" onclick="selectNetwork('MTN')">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/5/51/MTN_Logo.svg" alt="MTN"/>
+        <div>MTN</div>
+      </div>
+      <div class="network" onclick="selectNetwork('Airtel')">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/5/5b/Airtel_logo.svg" alt="Airtel"/>
+        <div>Airtel</div>
+      </div>
+      <div class="network" onclick="selectNetwork('Glo')">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/b/b9/Globacom_Logo.png" alt="Glo"/>
+        <div>Glo</div>
+      </div>
+      <div class="network" onclick="selectNetwork('9mobile')">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/3/3b/9mobile_logo.png" alt="9mobile"/>
+        <div>9mobile</div>
+      </div>
+    </div>
+
+    <select id="amount">
+      <option value="">Select Amount</option>
+    </select>
+
+    <button class="btn" onclick="confirmTopup()">Buy Airtime</button>
+
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "SENDER_ID",
+      appId: "APP_ID"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    
+
+    let selectedNetwork = '';
+    const networkPrices = {
+      MTN: [100, 200, 500, 1000],
+      Airtel: [100, 200, 500, 1000],
+      Glo: [100, 200, 500, 1000],
+      '9mobile': [100, 200, 500, 1000]
+    };
+
+    function selectNetwork(name) {
+      selectedNetwork = name;
+      document.querySelectorAll('.network').forEach(el => {
+        el.classList.remove('selected');
+      });
+      event.currentTarget.classList.add('selected');
+
+      const amountSelect = document.getElementById('amount');
+      amountSelect.innerHTML = '<option value="">Select Amount</option>';
+      networkPrices[name].forEach(price => {
+        amountSelect.innerHTML += `<option value="${price}">₦${price}</option>`;
+      });
+    }
+
+    function confirmTopup() {
+      const phone = document.getElementById('phone').value.trim();
+      const amount = document.getElementById('amount').value;
+      const msg = document.getElementById('msg');
+
+      if (!phone || !amount || !selectedNetwork) {
+        msg.textContent = "Please fill all fields.";
+        return;
+      }
+
+      msg.style.color = 'green';
+      msg.textContent = `Processing ₦${amount} airtime for ${selectedNetwork} to ${phone}...`;
+
+      // 👉 You will replace this with real API call to Topup platform
+      setTimeout(() => {
+        msg.textContent = "Airtime purchased successfully!";
+      }, 2000);
+    }
+  </script>
+</body>
+</html>

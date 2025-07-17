@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>IYAL DATA - Dashboard</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #ffffff;
+      color: #333;
+    }
+    .container {
+      max-width: 500px;
+      margin: auto;
+      padding: 20px;
+    }
+    .logo {
+      text-align: center;
+      font-size: 30px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    .logo span {
+      color: #ff6600;
+      font-size: 36px;
+    }
+    .welcome {
+      text-align: center;
+      color: #002b5c;
+      font-size: 18px;
+      margin-bottom: 20px;
+    }
+    .balance-total {
+      background-color: #f0f8ff;
+      padding: 15px;
+      border-radius: 10px;
+      font-size: 18px;
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 20px;
+      border: 1px solid #0074d9;
+    }
+    .wallets {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .wallet {
+      flex: 1;
+      background: #f9f9f9;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      text-align: center;
+    }
+    .wallet h4 {
+      margin: 0;
+      font-size: 14px;
+      color: #555;
+    }
+    .wallet p {
+      font-size: 16px;
+      font-weight: bold;
+      margin: 5px 0 0;
+      color: #0074d9;
+    }
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .btn {
+      flex: 1;
+      min-width: 45%;
+      padding: 12px;
+      background-color: #0074d9;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .btn:hover {
+      background-color: #005fa3;
+    }
+    .btn-contact {
+      background-color: #28a745;
+    }
+    .logout {
+      text-align: center;
+      margin-top: 20px;
+    }
+    .logout a {
+      font-size: 14px;
+      color: #d00;
+      text-decoration: none;
+    }
+    @media (max-width: 500px) {
+      .btn {
+        min-width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo"><span>I</span>YAL DATA</div>
+    <div class="welcome" id="welcome">Loading...</div>
+
+    <div class="balance-total">
+      Total Balance: ₦<span id="total">0</span>
+    </div>
+
+    <div class="wallets">
+      <div class="wallet">
+        <h4>PalmPay</h4>
+        <p>₦<span id="palmpay">0</span></p>
+      </div>
+      <div class="wallet">
+        <h4>Wema Bank</h4>
+        <p>₦<span id="monnify">0</span></p>
+      </div>
+    </div>
+
+    <div class="button-row">
+      <button class="btn" onclick="location.href='topup-data.html'">Buy Data</button>
+      <button class="btn" onclick="location.href='topup-airtime.html'">Buy Airtime</button>
+      <button class="btn" onclick="location.href='fund-wallet.html'">Fund Wallet</button>
+      <button class="btn btn-contact" onclick="location.href='mailto:support@iyaldata.com'">Contact Us</button>
+    </div>
+
+    <div class="logout">
+      <a href="#" onclick="logout()">Logout</a>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
+  <script>
+    // ✅ Correct Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyDbNuip8ejhXmZT1bKHUftp4h4Q5YuNyDc",
+      authDomain: "iyal-top-up.firebaseapp.com",
+      projectId: "iyal-top-up",
+      storageBucket: "iyal-top-up.appspot.com",
+      messagingSenderId: "1001070287144",
+      appId: "1:1001070287144:web:864050b20d79998205d81d",
+      measurementId: "G-2F89V9Z7SW"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    const welcome = document.getElementById('welcome');
+    const palmpayEl = document.getElementById('palmpay');
+    const monnifyEl = document.getElementById('monnify');
+    const totalEl = document.getElementById('total');
+
+    auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        try {
+          const doc = await db.collection("users").doc(user.uid).get();
+          if (doc.exists) {
+            const data = doc.data();
+            const username = data.username || "User";
+            const palmpay = data.palmpay || 0;
+            const monnify = data.monnify || 0;
+            const total = palmpay + monnify;
+
+            welcome.textContent = `${username}, welcome to IYAL DATA`;
+            palmpayEl.textContent = palmpay.toLocaleString();
+            monnifyEl.textContent = monnify.toLocaleString();
+            totalEl.textContent = total.toLocaleString();
+          } else {
+            welcome.textContent = "No user data found.";
+          }
+        } catch (err) {
+          console.error(err);
+          welcome.textContent = "Error loading user data.";
+        }
+      } else {
+        window.location.href = "login.html";
+      }
+    });
+
+    function logout() {
+      auth.signOut().then(() => window.location.href = "login.html");
+    }
+  </script>
+</body>
+</html>
