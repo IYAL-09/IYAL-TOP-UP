@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>IYAL DATA - Register</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #f8f9fa;
+      color: #333;
+    }
+    .container {
+      max-width: 400px;
+      margin: 60px auto;
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    .logo {
+      font-size: 28px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    .logo span {
+      color: #ff6600; /* orange I */
+      font-size: 34px;
+    }
+    h2 {
+      margin-bottom: 10px;
+      color: #002b5c;
+    }
+    input {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background-color: #002b5c;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #004080;
+    }
+    .msg {
+      margin-top: 10px;
+      font-size: 14px;
+      color: red;
+    }
+    .link {
+      margin-top: 20px;
+      font-size: 14px;
+    }
+    .link a {
+      color: #0074d9;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="logo"><span>I</span>YAL DATA</div>
+    <h2>Welcome to IYAL DATA</h2>
+    <form id="registerForm">
+      <input type="text" id="username" placeholder="Username" required />
+      <input type="email" id="email" placeholder="Email" required />
+      <input type="password" id="password" placeholder="Password" required />
+      <button type="submit">Register</button>
+      <div class="msg" id="message"></div>
+    </form>
+    <div class="link">
+      Already have an account? <a href="login.html">Login</a>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
+
+  <script>
+    // ✅ Your actual Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyDbNuip8ejhXmZT1bKHUftp4h4Q5YuNyDc",
+      authDomain: "iyal-top-up.firebaseapp.com",
+      projectId: "iyal-top-up",
+      storageBucket: "iyal-top-up.appspot.com",
+      messagingSenderId: "1001070287144",
+      appId: "1:1001070287144:web:864050b20d79998205d81d",
+      measurementId: "G-2F89V9Z7SW"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    const form = document.getElementById('registerForm');
+    const msg = document.getElementById('message');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = form.email.value;
+      const password = form.password.value;
+      const username = form.username.value;
+
+      try {
+        const cred = await auth.createUserWithEmailAndPassword(email, password);
+        const uid = cred.user.uid;
+
+        // 🔁 Simulate creating a virtual Monnify account (can be replaced with API)
+        const monnifyAccount = {
+          number: generateRandomAccountNumber(),
+          bank: "Wema Bank",
+          name: username
+        };
+
+        await db.collection("users").doc(uid).set({
+          email: email,
+          username: username,
+          palmpay: 0,
+          monnify: 0,
+          monnifyAccount: monnifyAccount,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        msg.style.color = 'green';
+        msg.textContent = "Registration successful! Redirecting...";
+        setTimeout(() => window.location.href = "index.html", 1500);
+      } catch (error) {
+        msg.style.color = 'red';
+        msg.textContent = error.message;
+      }
+    });
+
+    function generateRandomAccountNumber() {
+      return Math.floor(1000000000 + Math.random() * 9000000000).toString();
+    }
+  </script>
+</body>
+</html>
+
+
