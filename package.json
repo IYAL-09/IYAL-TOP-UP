@@ -1,0 +1,13 @@
+{
+    "name": "topup-app",
+    "version": "1.0.0",
+    "main": "api/create-vpay-account.js",
+    "scripts": {
+        "start": "node api/create-vpay-account.js"
+    },
+    "dependencies": {
+        "dotenv": "^17.2.0",
+        "firebase-admin": "^11.11.1",
+        "node-fetch": "^3.3.2"
+    }
+}

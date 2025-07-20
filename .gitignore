@@ -1,0 +1,26 @@
+# Firebase service account key (DO NOT UPLOAD THIS)
+api/serviceAccountKey.js
+
+# Local environment variable files
+.env
+*.env
+
+# Node.js dependencies (in case you use them)
+node_modules/
+
+# Log files
+*.log
+
+# macOS system files
+.DS_Store
+
+# Vercel build output (optional, if you use Vercel CLI locally)
+.vercel
+
+# Build output (if you use tools like Next.js or others)
+dist/
+build/
+
+# JSON keys or credentials (except package.json)
+*.json
+!package.json
