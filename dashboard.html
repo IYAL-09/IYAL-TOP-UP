@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>IYAL DATA - Dashboard</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f2f5f9;
+      margin: 0;
+      padding: 0;
+      color: #333;
+    }
+
+    .header {
+      background-color: #002b5c;
+      color: white;
+      padding: 20px 10px 30px;
+      text-align: center;
+      position: relative;
+    }
+
+    .header img.logo-img {
+      width: 60px;
+      height: 60px;
+      object-fit: cover;
+      border-radius: 50%;
+      margin-bottom: 10px;
+    }
+
+    .header .logo {
+      font-size: 26px;
+      font-weight: bold;
+    }
+
+    .header .logo .highlight {
+      color: #ff6600;
+    }
+
+    .logout-btn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: none;
+      border: none;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .container {
+      padding: 25px;
+      max-width: 600px;
+      margin: auto;
+      text-align: center;
+    }
+
+    .welcome {
+      font-size: 20px;
+      margin-bottom: 15px;
+    }
+
+    .balance-card {
+      background: linear-gradient(to right, #0074d9, #00c6ff);
+      color: white;
+      box-shadow: 0 0 15px rgba(0,0,0,0.15);
+      padding: 20px;
+      border-radius: 15px;
+      margin-bottom: 25px;
+    }
+
+    .balance-card h3 {
+      margin: 0;
+      font-weight: 400;
+      font-size: 16px;
+    }
+
+    .balance-card p {
+      font-size: 26px;
+      margin: 10px 0 0;
+      font-weight: bold;
+    }
+
+    .buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: center;
+    }
+
+    .button {
+      flex: 1 1 45%;
+      padding: 15px;
+      font-size: 16px;
+      background-color: #0074d9;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: background-color 0.3s ease;
+    }
+
+    .button:hover {
+      background-color: #005bb5;
+    }
+
+    @media(max-width: 480px) {
+      .button {
+        flex: 1 1 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <button class="logout-btn" onclick="logout()">Logout</button>
+    <img src="logo.png" alt="Logo" class="logo-img" />
+    <div class="logo"><span class="highlight">I</span>YAL DATA</div>
+  </div>
+
+  <div class="container">
+    <div class="welcome" id="welcomeUser">Welcome</div>
+
+    <div class="balance-card">
+      <h3>Wallet Balance</h3>
+      <p id="userBalance">₦0.00</p>
+    </div>
+
+    <div class="buttons">
+      <button class="button" onclick="location.href='airtime.html'"><i class="fas fa-mobile-alt"></i> Buy Airtime</button>
+      <button class="button" onclick="location.href='data.html'"><i class="fas fa-wifi"></i> Buy Data</button>
+      <button class="button" onclick="location.href='VPay.html'"><i class="fas fa-wallet"></i> Fund Wallet</button>
+      <button class="button" onclick="location.href='contact.html'"><i class="fas fa-headset"></i> Contact Us</button>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
+  <script>
+   
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    const welcomeUser = document.getElementById('welcomeUser');
+    const userBalanceEl = document.getElementById('userBalance');
+
+    auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        try {
+          const doc = await db.collection("users").doc(user.uid).get();
+          const userData = doc.data();
+          welcomeUser.textContent = `Welcome, ${userData.username}`;
+
+          fetch(`https://iyal-data.vercel.app/api/get-vpay-balance?uid=${user.uid}`)
+            .then(res => res.json())
+            .then(data => {
+              if (data.balance !== undefined) {
+                userBalanceEl.textContent = `₦${parseFloat(data.balance).toFixed(2)}`;
+              } else {
+                userBalanceEl.textContent = "Balance unavailable";
+              }
+            })
+            .catch(err => {
+              console.error("Balance error:", err);
+              userBalanceEl.textContent = "Error fetching balance";
+            });
+        } catch (e) {
+          console.error("User fetch error:", e);
+          welcomeUser.textContent = "Welcome!";
+        }
+      } else {
+        location.href = 'login.html';
+      }
+    });
+
+    function logout() {
+      firebase.auth().signOut().then(() => {
+        location.href = 'login.html';
+      });
+    }
+  </script>
+</body>
+</html>
+
+

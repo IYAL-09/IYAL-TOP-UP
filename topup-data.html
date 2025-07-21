@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>IYAL DATA - Buy Data</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f5f8ff;
+      color: #333;
+    }
+    .container {
+      max-width: 480px;
+      margin: auto;
+      padding: 30px 20px;
+    }
+    .logo {
+      text-align: center;
+      font-size: 28px;
+      font-weight: bold;
+      margin-bottom: 30px;
+    }
+    .logo span {
+      color: #ff6600;
+    }
+    form {
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.05);
+    }
+    input, select, button {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background-color: #0074d9;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #005fa3;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo"><span>I</span>YAL DATA</div>
+
+    <form id="dataForm">
+      <select id="network" required>
+        <option value="">Select Network</option>
+        <option value="mtn">MTN</option>
+        <option value="glo">GLO</option>
+        <option value="airtel">Airtel</option>
+        <option value="9mobile">9mobile</option>
+      </select>
+
+      <select id="plan" required>
+        <option value="">Select Plan</option>
+        <option value="500mb">500MB</option>
+        <option value="1gb">1GB</option>
+        <option value="2gb">2GB</option>
+        <option value="5gb">5GB</option>
+      </select>
+
+      <input type="text" id="phone" placeholder="Phone Number" required />
+      <button type="submit">Buy Data</button>
+    </form>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyC-Ecv9wAQro9aLfH59RUUFCrVFoN1A8Jg",
+      authDomain: "topup-d8f94.firebaseapp.com",
+      projectId: "topup-d8f94"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    document.getElementById("dataForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const user = auth.currentUser;
+      if (!user) {
+        alert("You must be logged in");
+        return;
+      }
+
+      const network = document.getElementById("network").value;
+      const plan = document.getElementById("plan").value;
+      const phone = document.getElementById("phone").value;
+
+      const res = await fetch("/api/data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          uid: user.uid,
+          network,
+          plan,
+          phone
+        })
+      });
+
+      const data = await res.json();
+      if (data.status === "success") {
+        window.location.href = `result.html?status=success&type=data&message=${encodeURIComponent(data.message)}`;
+      } else {ssss
+        window.location.href = `result.html?status=error&type=data&message=${encodeURIComponent(data.message)}`;
+      }
+    });
+  </script>
+</body>
+</html>
+
+
+

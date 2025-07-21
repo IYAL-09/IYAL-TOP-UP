@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Iyal Top-Up | Register</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f2f4f7;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .register-container {
+      background: #fff;
+      padding: 2rem 2.5rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .logo {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .logo h1 {
+      font-size: 24px;
+      color: #002b5c;
+      font-weight: bold;
+    }
+
+    .logo span {
+      color:#ff6600 ;
+    }
+
+    form input {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background-color: #0074d9;
+      color: white;
+      border: none;
+      font-size: 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background-color: #005fa3;
+    }
+
+    #message {
+      margin-top: 15px;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 13px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="register-container">
+    <div class="logo">
+      <h1><span>I</span>YAL DATA</h1>
+    </div>
+
+    <form id="registerForm">
+      <input type="text" name="username" placeholder="Full Name" required />
+      <input type="email" name="email" placeholder="Email Address" required />
+      <input type="password" name="password" placeholder="Password" required />
+      <button type="submit">Register</button>
+    </form>
+
+    <div id="message"></div>
+    <div class="footer">Already have an account? <a href="login.html">Login</a></div>
+  </div>
+
+  <!-- Firebase App SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+  <script>
+   
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    const form = document.getElementById('registerForm');
+    const msg = document.getElementById('message');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = form.email.value;
+      const password = form.password.value;
+      const username = form.username.value;
+
+      try {
+        msg.style.color = '#333';
+        msg.textContent = "Creating account...";
+
+        const cred = await auth.createUserWithEmailAndPassword(email, password);
+        const uid = cred.user.uid;
+
+        const response = await fetch('https://iyal-data.vercel.app/api/create-vpay-account', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: username, email: email })
+        });
+
+        const vpayAccount = await response.json();
+
+        if (!vpayAccount.accountNumber) throw new Error("Failed to create virtual account");
+
+        await db.collection("users").doc(uid).set({
+          email,
+          username,
+          balance: 0,
+          vpayAccount,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        msg.style.color = 'green';
+        msg.textContent = "Registration successful! Redirecting...";
+        setTimeout(() => window.location.href = "dashboard.html", 1500);
+
+      } catch (err) {
+        console.error(err);
+        msg.style.color = 'red';
+        msg.textContent = err.message || "Registration failed";
+      }
+    });
+  </script>
+</body>
+</html>

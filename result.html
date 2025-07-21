@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>IYAL DATA - Transaction Result</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f5f8fa;
+      color: #333;
+    }
+    .container {
+      max-width: 500px;
+      margin: auto;
+      padding: 40px 20px;
+      text-align: center;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      margin-top: 60px;
+    }
+    .logo-wrapper {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .logo-placeholder {
+      width: 60px;
+      height: 60px;
+      background: #ddd;
+      border-radius: 50%;
+      display: inline-block;
+      margin-bottom: 10px;
+    }
+    .logo-text {
+      font-size: 32px;
+      font-weight: bold;
+    }
+    .logo-text span {
+      color: #ff6600;
+    }
+    .icon {
+      font-size: 64px;
+      margin: 30px 0 20px;
+    }
+    .icon.success {
+      color: #28a745;
+    }
+    .icon.error {
+      color: #dc3545;
+    }
+    h2 {
+      font-size: 22px;
+      margin-bottom: 10px;
+      color: #002b5c;
+    }
+    p {
+      font-size: 16px;
+      margin-bottom: 30px;
+      color: #555;
+    }
+    .btn {
+      padding: 12px 24px;
+      background-color: #0074d9;
+      color: #fff;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      text-decoration: none;
+      display: inline-block;
+      transition: background 0.3s ease;
+    }
+    .btn:hover {
+      background-color: #005fa3;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo-wrapper">
+      <div class="logo-placeholder"></div>
+      <div class="logo-text"><span>I</span>YAL DATA</div>
+    </div>
+    <div id="result-icon" class="icon">🔄</div>
+    <h2 id="result-title">Loading...</h2>
+    <p id="result-message">Please wait...</p>
+    <a href="dashboard.html" class="btn">Back to Dashboard</a>
+  </div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const status = urlParams.get('status');  // "success" or "error"
+    const type = urlParams.get('type');      // "airtime" or "data"
+    const message = urlParams.get('message'); // Dynamic message
+
+    const icon = document.getElementById("result-icon");
+    const title = document.getElementById("result-title");
+    const msg = document.getElementById("result-message");
+
+    if (status === "success") {
+      icon.innerHTML = "✅";
+      icon.classList.add("success");
+      title.textContent = type === "airtime" ? "Airtime Purchase Successful" : "Data Purchase Successful";
+      msg.textContent = message || "Your transaction was completed successfully.";
+    } else if (status === "error") {
+      icon.innerHTML = "❌";
+      icon.classList.add("error");
+      title.textContent = type === "airtime" ? "Airtime Purchase Failed" : "Data Purchase Failed";
+      msg.textContent = message || "Something went wrong. Please try again.";
+    } else {
+      icon.innerHTML = "❓";
+      title.textContent = "Unknown Status";
+      msg.textContent = "No transaction data found.";
+    }
+  </script>
+</body>
+</html>
+
