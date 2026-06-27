@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Naija Kolo - Premium Wealth Command</title>
+    <!-- FontAwesome Pro Icons Setup -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Supabase JS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --bg-deep: #020703;
+            --surface-card: #09130b;
+            --surface-elevated: #0f2214;
+            --border-glow: #193820;
+            --primary-neon: #00e676;
+            --primary-muted: #00a352;
+            --text-pure: #ffffff;
+            --text-secondary: #96af9d;
+            --danger-neon: #ff5252;
+            --premium-gradient: linear-gradient(135deg, #0a2f16 0%, #041409 100%);
+            --font-stack: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: var(--font-stack);
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-deep);
+            color: var(--text-pure);
+            padding-top: 95px;
+            padding-bottom: 40px;
+            overflow-x: hidden;
+        }
+
+        /* --- AGENCY-TIER GLASS HEADER --- */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 75px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 24px;
+            background: rgba(4, 13, 6, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-glow);
+            z-index: 1000;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.4rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            color: var(--text-pure);
+        }
+
+        .logo i {
+            color: var(--primary-neon);
+            filter: drop-shadow(0 0 8px rgba(0, 230, 118, 0.4));
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .icon-btn {
+            background: rgba(25, 56, 32, 0.3);
+            border: 1px solid var(--border-glow);
+            color: var(--text-pure);
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .icon-btn:hover {
+            border-color: var(--primary-neon);
+            color: var(--primary-neon);
+            background: rgba(0, 230, 118, 0.05);
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            background-color: var(--danger-neon);
+            color: white;
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 2px 5px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        /* --- FIXED FUNCTIONING HAMBURGER SIDE DRAWER --- */
+        .nav-drawer {
+            position: fixed;
+            top: 0;
+            left: -320px;
+            width: 310px;
+            height: 100%;
+            background-color: var(--surface-card);
+            border-right: 1px solid var(--border-glow);
+            z-index: 2000; /* Must sit higher than header layers */
+            transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            padding: 30px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        /* Active Utility Class executed by JS Engine */
+        .nav-drawer.open {
+            transform: translateX(320px);
+        }
+
+        .drawer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-glow);
+            padding-bottom: 20px;
+        }
+
+        .drawer-header h3 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--primary-neon);
+        }
+
+        .drawer-links {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            overflow-y: auto;
+        }
+
+        .drawer-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 1.05rem;
+            font-weight: 500;
+            padding: 14px 16px;
+            border-radius: 12px;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+        }
+
+        .drawer-item:hover, .drawer-item.active {
+            background: rgba(0, 230, 118, 0.06);
+            color: var(--text-pure);
+            border-color: rgba(0, 230, 118, 0.15);
+        }
+
+        .drawer-item i {
+            font-size: 1.2rem;
+            color: var(--primary-neon);
+            width: 24px;
+        }
+
+        /* SCREEN DEPTH BACKDROP BLUR OVERLAY */
+        .drawer-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 1500;
+            display: none;
+        }
+
+        /* --- NOTIFICATIONS DRAWER LAYER --- */
+        .notif-panel {
+            position: fixed;
+            top: 0;
+            right: -360px;
+            width: 350px;
+            max-width: 100%;
+            height: 100%;
+            background-color: var(--surface-card);
+            border-left: 1px solid var(--border-glow);
+            z-index: 2000;
+            transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            padding: 30px 24px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .notif-panel.open {
+            transform: translateX(-360px);
+        }
+
+        .notif-list {
+            overflow-y: auto;
+            flex-grow: 1;
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .notif-card {
+            padding: 16px;
+            background: rgba(25, 56, 32, 0.15);
+            border: 1px solid var(--border-glow);
+            border-radius: 12px;
+            font-size: 0.9rem;
+        }
+
+        .notif-card .notif-title {
+            font-weight: 700;
+            color: var(--primary-neon);
+            margin-bottom: 4px;
+        }
+
+        .notif-card .notif-body {
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+
+        /* --- APPLICATION CANVAS FRAME --- */
+        main {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* --- 1. THE RE-ENGINEERED UNIFIED CAPITAL PROFILE BALANCE CARD --- */
+        .unified-balance-card {
+            background: var(--premium-gradient);
+            border: 1px solid var(--border-glow);
+            border-radius: 24px;
+            padding: 28px;
+            margin-bottom: 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .unified-balance-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 250px;
+            height: 250px;
+            background: radial-gradient(circle, rgba(0,230,118,0.08) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .main-balance-segment {
+            border-bottom: 1px solid rgba(25, 56, 32, 0.4);
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+
+        .main-balance-segment h3 {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .main-balance-segment .total-amount {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--text-pure);
+            letter-spacing: -1px;
+        }
+
+        .sub-balances-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .sub-val h4 {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .sub-val p {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        /* --- 2. DEPOSIT HUB ADVISORY LINK BLOCK --- */
+        .funding-cta-container {
+            background: #06170d;
+            border: 1px dashed var(--primary-neon);
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 30px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .funding-cta-container:hover {
+            background: #092213;
+            transform: translateY(-2px);
+        }
+
+        .cta-header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+        }
+
+        .cta-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--primary-neon);
+        }
+
+        .cta-body-text {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin-bottom: 16px;
+        }
+
+        /* PRO TRADING FEE MATRIX INTERACTIVE MATH LIST */
+        .fee-matrix-box {
+            background: var(--bg-deep);
+            border: 1px solid var(--border-glow);
+            border-radius: 12px;
+            padding: 12px 16px;
+        }
+
+        .fee-matrix-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--text-pure);
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .matrix-table {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-size: 0.85rem;
+        }
+
+        .matrix-row {
+            display: flex;
+            justify-content: space-between;
+            color: var(--text-secondary);
+        }
+
+        .matrix-row span strong {
+            color: var(--primary-neon);
+        }
+
+        /* --- SHORTCUT ACTION BUTTONS --- */
+        .action-hub {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 35px;
+        }
+
+        .btn-hub {
+            flex: 1;
+            background-color: var(--surface-card);
+            border: 1px solid var(--border-glow);
+            padding: 20px;
+            border-radius: 16px;
+            color: var(--text-pure);
+            text-decoration: none;
+            text-align: center;
+            font-weight: 600;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-hub:hover {
+            border-color: var(--primary-neon);
+            background: rgba(0, 230, 118, 0.03);
+        }
+
+        .btn-hub i {
+            font-size: 1.8rem;
+            color: var(--primary-neon);
+        }
+
+        /* --- TARGET SAVINGS PORTFOLIO LISTING --- */
+        .section-header {
+            margin-bottom: 20px;
+            font-size: 1.25rem;
+            font-weight: 700;
+            border-left: 4px solid var(--primary-neon);
+            padding-left: 12px;
+            letter-spacing: -0.3px;
+        }
+
+        .plans-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .plan-item-card {
+            background-color: var(--surface-card);
+            border: 1px solid var(--border-glow);
+            border-radius: 16px;
+            padding: 22px;
+        }
+
+        .plan-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+
+        .plan-tag {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .tag-lock { background: rgba(179, 136, 255, 0.1); color: #b388ff; border: 1px solid rgba(179, 136, 255, 0.2); }
+        .tag-flex { background: rgba(140, 158, 255, 0.1); color: #8c9eff; border: 1px solid rgba(140, 158, 255, 0.2); }
+
+        .progress-track {
+            background-color: var(--bg-deep);
+            border-radius: 8px;
+            height: 8px;
+            width: 100%;
+            margin: 14px 0;
+            overflow: hidden;
+            border: 1px solid rgba(25, 56, 32, 0.2);
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, var(--primary-muted), var(--primary-neon));
+            height: 100%;
+            width: 0%;
+            border-radius: 8px;
+            transition: width 0.6s cubic-bezier(0.1, 0.8, 0.2, 1);
+        }
+
+        .plan-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .plan-action-line {
+            margin-top: 16px;
+            border-top: 1px solid var(--border-glow);
+            padding-top: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .loading-shimmer {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- INTERACTIVE SCREEN SHADE OVERLAY -->
+    <div class="drawer-overlay" id="drawerOverlay"></div>
+
+    <!-- MAIN SAAS HEADER -->
+    <header>
+        <div class="header-actions">
+            <button class="icon-btn" id="menuToggleBtn" aria-label="Open Navigation"><i class="fas fa-bars"></i></button>
+        </div>
+        <div class="logo">
+            <i class="fas fa-piggy-bank"></i>
+            <span>Naija Kolo</span>
+        </div>
+        <div class="header-actions">
+            <button class="icon-btn" id="notifToggleBtn" aria-label="Open Notifications">
+                <i class="fas fa-bell"></i>
+                <span class="notification-badge" id="notifBadge">0</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- FULLY WORKING MOBILE DRAWER NAV SLIDE MENU -->
+    <nav class="nav-drawer" id="navDrawer">
+        <div class="drawer-header">
+            <h3>Account Console</h3>
+            <button class="icon-btn" id="menuCloseBtn"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="drawer-links">
+            <a href="dashboard.html" class="drawer-item active"><i class="fas fa-chart-pie"></i> Dashboard</a>
+            <a href="plans.html" class="drawer-item"><i class="fas fa-plus-circle"></i> Create Plan</a>
+            <a href="kyc.html" class="drawer-item"><i class="fas fa-user-shield"></i> KYC Verification</a>
+            <a href="settings.html" class="drawer-item"><i class="fas fa-sliders-h"></i> Settings</a>
+            <a href="about.html" class="drawer-item"><i class="fas fa-info-circle"></i> About Us</a>
+            <a href="support.html" class="drawer-item"><i class="fas fa-headset"></i> Support</a>
+            <a href="terms.html" class="drawer-item"><i class="fas fa-file-contract"></i> Terms & Conditions</a>
+            <a href="privacy.html" class="drawer-item"><i class="fas fa-shield-alt"></i> Privacy Policy</a>
+        </div>
+    </nav>
+
+    <!-- RIGHT-SIDE SLIDE NOTIFICATION WINDOW -->
+    <div class="notif-panel" id="notifPanel">
+        <div class="drawer-header">
+            <h3>Activity Logs</h3>
+            <button class="icon-btn" id="notifCloseBtn"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="notif-list" id="notificationsTarget">
+            <div style="text-align: center; padding: 20px; color: var(--text-secondary);">No transaction updates.</div>
+        </div>
+    </div>
+
+    <!-- CONTENT DISPLAY AREA -->
+    <main>
+        
+        <!-- 1. CORRECTION: THE SINGLE COMBINED PORTFOLIO CARD -->
+        <section class="unified-balance-card">
+            <div class="main-balance-segment">
+                <h3>Unified Capital Balance</h3>
+                <div class="total-amount" id="balTotalBalance">₦0.00</div>
+            </div>
+            <div class="sub-balances-grid">
+                <div class="sub-val">
+                    <h4>Liquid Free Wallet</h4>
+                    <p style="color: var(--primary-neon);" id="balFreeWallet">₦0.00</p>
+                </div>
+                <div class="sub-val">
+                    <h4>Locked Savings</h4>
+                    <p style="color: #ffb300;" id="balLockedPlans">₦0.00</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. CORRECTION: FUNDING DEPOSIT INSTRUCTION BOX GATED TO KYC -->
+        <section class="funding-cta-container" onclick="window.location.href='kyc.html'">
+            <div class="cta-header-row">
+                <div class="cta-title">
+                    <i class="fas fa-university"></i>
+                    <span>Click to Fund Wallet / See Account Number</span>
+                </div>
+                <i class="fas fa-arrow-right" style="color: var(--primary-neon);"></i>
+            </div>
+            <div class="cta-body-text">
+                Incoming bank transfers incur a processing fee of <strong>1.5%</strong> (capped at a maximum of ₦2,000 per deposit). To ensure your target receives an exact settlement value, append the processing fee to your mobile banking transfer.
+            </div>
+            <div class="fee-matrix-box">
+                <div class="fee-matrix-title">Exact Target Settlement Examples:</div>
+                <div class="matrix-table">
+                    <div class="matrix-row"><span>Want ₦100 inside?</span> <span>Send Exactly: <strong>₦101.50</strong></span></div>
+                    <div class="matrix-row"><span>Want ₦500 inside?</span> <span>Send Exactly: <strong>₦507.50</strong></span></div>
+                    <div class="matrix-row"><span>Want ₦1,000 inside?</span> <span>Send Exactly: <strong>₦1,015.00</strong></span></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- QUICK FORWARDING HUBS -->
+        <section class="action-hub">
+            <a href="plans.html" class="btn-hub">
+                <i class="fas fa-piggy-bank"></i>
+                <span>Open New Plan</span>
+            </a>
+            <a href="plans.html?action=withdraw" class="btn-hub">
+                <i class="fas fa-wallet"></i>
+                <span>Disburse Plan</span>
+            </a>
+        </section>
+
+        <!-- ACTIVE PLANS WRAPPER LIST -->
+        <h2 class="section-header">Monitored Targets</h2>
+        <section class="plans-container" id="activePlansTarget">
+            <div class="loading-shimmer">Synchronizing live portfolio matrix modules...</div>
+        </section>
+    </main>
+
+    <script>
+        const SUPABASE_URL = "https://mgihqnbcbjzingerefrk.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1naWhxbmJjYmp6aW5nZXJlZnJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NjA4NTUsImV4cCI6MjA5ODEzNjg1NX0.r4lCuJZjIaBxXHYlmzPf5ho-TUZnxr4XA__g_vdiEMU"; 
+        const EDGE_FUNCTION_ENDPOINT = "https://mgihqnbcbjzingerefrk.supabase.co/functions/v1/swift-responder";
+
+        const supabaseClientInstance = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // --- FIXED SEAMLESS DRAWER ENGINE IMPLEMENTATION ---
+        const menuToggleBtn = document.getElementById('menuToggleBtn');
+        const menuCloseBtn = document.getElementById('menuCloseBtn');
+        const navDrawer = document.getElementById('navDrawer');
+        const drawerOverlay = document.getElementById('drawerOverlay');
+
+        const notifToggleBtn = document.getElementById('notifToggleBtn');
+        const notifCloseBtn = document.getElementById('notifCloseBtn');
+        const notifPanel = document.getElementById('notifPanel');
+        const notifBadge = document.getElementById('notifBadge');
+
+        // Drawer Control Openers & Closers
+        menuToggleBtn.onclick = () => { navDrawer.classList.add('open'); drawerOverlay.style.display = 'block'; }
+        menuCloseBtn.onclick = () => { navDrawer.classList.remove('open'); drawerOverlay.style.display = 'none'; }
+        
+        notifToggleBtn.onclick = () => { notifPanel.classList.add('open'); drawerOverlay.style.display = 'block'; }
+        notifCloseBtn.onclick = () => { notifPanel.classList.remove('open'); drawerOverlay.style.display = 'none'; }
+        
+        drawerOverlay.onclick = () => {
+            navDrawer.classList.remove('open');
+            notifPanel.classList.remove('open');
+            drawerOverlay.style.display = 'none';
+        }
+
+        // --- METRIC SYNC SYSTEM ---
+        async function loadDashboardMetrics() {
+            const { data: { session }, error: sessionErr } = await supabaseClientInstance.auth.getSession();
+
+            if (sessionErr || !session) {
+                window.location.href = "login.html";
+                return;
+            }
+
+            try {
+                const res = await fetch(EDGE_FUNCTION_ENDPOINT, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${session.access_token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!res.ok) throw new Error("Sync failure.");
+                const metrics = await res.json();
+
+                // Format Cards UI Numbers cleanly
+                document.getElementById('balFreeWallet').innerText = '₦' + metrics.balances.free_wallet.toLocaleString('en-US', { minimumFractionDigits: 2 });
+                document.getElementById('balLockedPlans').innerText = '₦' + metrics.balances.locked_plans.toLocaleString('en-US', { minimumFractionDigits: 2 });
+                document.getElementById('balTotalBalance').innerText = '₦' + metrics.balances.total_balance.toLocaleString('en-US', { minimumFractionDigits: 2 });
+
+                const targetPlansContainer = document.getElementById('activePlansTarget');
+                targetPlansContainer.innerHTML = '';
+
+                if (metrics.plans.length === 0) {
+                    targetPlansContainer.innerHTML = `
+                        <div style="text-align: center; color: var(--text-secondary); padding: 40px;">
+                            No active savings targets found.
+                        </div>`;
+                } else {
+                    metrics.plans.forEach(plan => {
+                        targetPlansContainer.innerHTML += `
+                            <div class="plan-item-card">
+                                <div class="plan-item-header">
+                                    <strong style="font-size: 1.1rem; color: #fff;">${plan.title}</strong>
+                                    <span class="plan-tag tag-${plan.type}">${plan.type === 'lock' ? 'KoloLock' : 'KoloFlex'}</span>
+                                </div>
+                                <div style="font-size: 1.5rem; font-weight: 700; color: var(--text-pure); margin-bottom: 4px;">
+                                    ₦${plan.current_amount.toLocaleString('en-US')} <span style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 400;">saved</span>
+                                </div>
+                                <div class="progress-track">
+                                    <div class="progress-fill" style="width: ${plan.percent_saved}%;"></div>
+                                </div>
+                                <div class="plan-meta">
+                                    <span>Target: ₦${plan.target_amount.toLocaleString('en-US')}</span>
+                                    <span>${plan.percent_saved}%</span>
+                                </div>
+                                <div class="plan-action-line">
+                                    <span style="color: var(--primary-neon); font-size: 0.85rem;"><i class="far fa-clock"></i> ${plan.days_remaining} Days Left</span>
+                                    <a href="plans.html?id=${plan.id}" style="color: var(--primary-neon); text-decoration: none; font-weight: 700; font-size: 0.9rem;">Manage Settings <i class="fas fa-chevron-right" style="font-size:0.7rem; margin-left:3px;"></i></a>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+
+                // Hydrate Notifications
+                const { data: notifications } = await supabaseClientInstance
+                    .from('notifications')
+                    .select('*')
+                    .order('created_at', { ascending: false })
+                    .limit(5);
+
+                const notifTarget = document.getElementById('notificationsTarget');
+                if (notifications && notifications.length > 0) {
+                    notifBadge.innerText = notifications.length;
+                    notifBadge.style.display = 'block';
+                    notifTarget.innerHTML = '';
+                    
+                    notifications.forEach(notif => {
+                        notifTarget.innerHTML += `
+                            <div class="notif-card">
+                                <div class="notif-title">${notif.title}</div>
+                                <div class="notif-body">${notif.message}</div>
+                            </div>
+                        `;
+                    });
+                }
+
+            } catch (err) {
+                console.error("Dashboard Sync Error:", err.message);
+            }
+        }
+
+        window.onload = loadDashboardMetrics;
+    </script>
+</body>
+</html>

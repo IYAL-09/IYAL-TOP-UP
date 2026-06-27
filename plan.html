@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Naija Kolo — Elite Savings Vaults</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --bg-deep: #030804;
+            --surface-card: #0b160e;
+            --surface-card-hover: #122417;
+            --border-glow: #1a3c22;
+            --primary-neon: #00e676;
+            --primary-glow: rgba(0, 230, 118, 0.1);
+            --text-pure: #ffffff;
+            --text-secondary: #90ab97;
+            --danger-neon: #ff5252;
+            --danger-glow: rgba(255, 82, 82, 0.1);
+            --warning-amber: #ffc107;
+            --warning-glow: rgba(255, 193, 7, 0.05);
+            --font-stack: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            --transition-smooth: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font-stack); }
+        body { background-color: var(--bg-deep); color: var(--text-pure); padding-top: 90px; padding-bottom: 40px; overflow-x: hidden; -webkit-font-smoothing: antialiased; }
+
+        /* --- AGENCY BLUR HEADER --- */
+        header {
+            position: fixed; top: 0; left: 0; width: 100%; height: 70px;
+            display: flex; justify-content: space-between; align-items: center; padding: 0 40px;
+            background: rgba(3, 8, 4, 0.8); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-glow); z-index: 1000;
+        }
+        .logo { display: flex; align-items: center; gap: 10px; font-size: 1.25rem; font-weight: 800; letter-spacing: -0.02em; }
+        .logo i { color: var(--primary-neon); filter: drop-shadow(0 0 8px var(--primary-neon)); }
+
+        .icon-btn {
+            background: rgba(26, 60, 34, 0.2); border: 1px solid var(--border-glow);
+            color: var(--text-pure); width: 38px; height: 38px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center; font-size: 1rem; cursor: pointer;
+            transition: var(--transition-smooth);
+        }
+        .icon-btn:hover { background: var(--primary-glow); border-color: var(--primary-neon); color: var(--primary-neon); }
+
+        /* --- SIDE DRAWER NAVIGATION --- */
+        .nav-drawer {
+            position: fixed; top: 0; left: -300px; width: 280px; height: 100%;
+            background-color: var(--surface-card); border-right: 1px solid var(--border-glow);
+            z-index: 2000; transition: var(--transition-smooth); padding: 30px 20px;
+            display: flex; flex-direction: column; gap: 24px;
+        }
+        .nav-drawer.open { transform: translateX(300px); box-shadow: 20px 0 60px rgba(0,0,0,0.6); }
+        .drawer-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-glow); padding-bottom: 16px; }
+        .drawer-header h3 { font-size: 1.1rem; font-weight: 700; }
+        .drawer-links { display: flex; flex-direction: column; gap: 4px; }
+        .drawer-item {
+            display: flex; align-items: center; gap: 12px; color: var(--text-secondary); text-decoration: none;
+            font-size: 0.95rem; font-weight: 500; padding: 10px 14px; border-radius: 10px; border: 1px solid transparent;
+            transition: var(--transition-smooth);
+        }
+        .drawer-item:hover, .drawer-item.active { background: var(--primary-glow); color: var(--text-pure); border-color: rgba(0, 230, 118, 0.15); }
+        .drawer-item i { color: var(--primary-neon); width: 20px; font-size: 1rem; }
+        .drawer-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(8px); z-index: 1500; display: none; }
+
+        /* --- GRID MASTER ARCHITECTURE --- */
+        main { max-width: 1200px; margin: 0 auto; padding: 0 40px; display: grid; grid-template-columns: 1fr 1fr; gap: 32px; align-items: start; }
+        @media (max-width: 1024px) { main { grid-template-columns: 1fr; gap: 24px; padding: 0 24px; } }
+
+        .full-span { grid-column: span 2; }
+        @media (max-width: 1024px) { .full-span { grid-column: span 1; } }
+
+        /* --- PREMIUM RULE BANNER --- */
+        .rules-banner {
+            background: var(--warning-glow); border: 1px solid rgba(255, 193, 7, 0.12);
+            border-radius: 16px; padding: 20px; position: relative; overflow: hidden;
+        }
+        .rules-banner::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--warning-amber); }
+        .rules-title { color: var(--warning-amber); font-weight: 700; display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 0.95rem; }
+        .rules-text { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; }
+
+        /* --- COMPACT PRO FORMS --- */
+        .form-card {
+            background-color: var(--surface-card); border: 1px solid var(--border-glow);
+            border-radius: 20px; padding: 24px; box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+        }
+        .form-card h2 { font-size: 1.15rem; font-weight: 800; margin-bottom: 20px; letter-spacing: -0.01em; display: flex; align-items: center; gap: 10px; }
+        .form-card h2 i { color: var(--primary-neon); }
+        
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        @media (max-width: 520px) { .form-grid { grid-template-columns: 1fr; } }
+
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group.full-width { grid-column: span 2; }
+        @media (max-width: 520px) { .form-group.full-width { grid-column: span 1; } }
+
+        .form-group label { font-size: 0.82rem; color: var(--text-secondary); font-weight: 600; }
+        .form-control {
+            background: rgba(3, 8, 4, 0.5); border: 1px solid var(--border-glow);
+            padding: 12px 14px; border-radius: 10px; color: white; font-size: 0.92rem; outline: none;
+            transition: var(--transition-smooth); width: 100%; height: 44px;
+        }
+        select.form-control { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2390ab97'><path d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/></svg>"); background-repeat: no-repeat; background-position: calc(100% - 14px) center; padding-right: 40px; }
+        .form-control:focus { border-color: var(--primary-neon); box-shadow: 0 0 10px rgba(0, 230, 118, 0.08); background: var(--bg-deep); }
+        
+        .submit-btn {
+            background-color: var(--primary-neon); color: var(--bg-deep); border: none;
+            padding: 14px; border-radius: 10px; font-weight: 700; font-size: 0.92rem; cursor: pointer; width: 100%;
+            transition: var(--transition-smooth); display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 8px;
+        }
+        .submit-btn:hover { opacity: 0.95; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0, 230, 118, 0.15); }
+
+        /* --- DASHBOARD PORTFOLIO LAYOUT --- */
+        .portfolio-section { display: flex; flex-direction: column; gap: 20px; }
+        .section-header h2 { font-size: 1.15rem; font-weight: 800; display: flex; align-items: center; gap: 10px; }
+
+        .plan-item-card { 
+            background-color: var(--surface-card); border: 1px solid var(--border-glow); 
+            border-radius: 18px; padding: 20px; transition: var(--transition-smooth);
+        }
+        .plan-item-card:hover { border-color: rgba(0, 230, 118, 0.2); background-color: var(--surface-card-hover); }
+        .plan-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .plan-title-text { font-size: 1rem; font-weight: 700; color: var(--text-pure); }
+        
+        .plan-tag { font-size: 0.65rem; text-transform: uppercase; padding: 4px 10px; border-radius: 6px; font-weight: 700; letter-spacing: 0.05em; }
+        .tag-lock { background: rgba(179, 136, 255, 0.08); color: #b388ff; border: 1px solid rgba(179, 136, 255, 0.15); }
+        .tag-flex { background: rgba(140, 158, 255, 0.08); color: #8c9eff; border: 1px solid rgba(140, 158, 255, 0.15); }
+
+        .progress-track { background-color: var(--bg-deep); border-radius: 6px; height: 6px; width: 100%; margin: 14px 0; overflow: hidden; border: 1px solid rgba(26, 60, 34, 0.2); }
+        .progress-fill { background: linear-gradient(90deg, var(--primary-neon), #00b0ff); height: 100%; width: 0%; transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+        .plan-meta { display: flex; justify-content: space-between; font-size: 0.82rem; color: var(--text-secondary); font-weight: 500; }
+        
+        .action-button-row { display: flex; gap: 10px; margin-top: 18px; border-top: 1px solid var(--border-glow); padding-top: 14px; }
+        .sub-action-btn { 
+            flex: 1; padding: 10px; border-radius: 8px; font-size: 0.85rem; font-weight: 700; cursor: pointer; 
+            border: 1px solid var(--border-glow); display: flex; align-items: center; justify-content: center; gap: 6px; transition: var(--transition-smooth); height: 38px;
+        }
+        .btn-allocate { background: var(--primary-glow); color: var(--primary-neon); border-color: rgba(0, 230, 118, 0.15); }
+        .btn-allocate:hover { background: var(--primary-neon); color: var(--bg-deep); }
+        .btn-withdraw { background: var(--danger-glow); color: var(--danger-neon); border-color: rgba(255, 82, 82, 0.15); }
+        .btn-withdraw:hover { background: var(--danger-neon); color: white; }
+
+        /* --- HIGH SECURITY MODAL --- */
+        .secure-modal {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.95);
+            width: 92%; max-width: 420px; background-color: var(--surface-card);
+            border: 1px solid var(--border-glow); border-radius: 24px; padding: 24px; z-index: 3000;
+            opacity: 0; pointer-events: none; transition: var(--transition-smooth); box-shadow: 0 20px 50px rgba(0,0,0,0.7);
+        }
+        .secure-modal.active { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%) scale(1); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+        .modal-header h3 { font-size: 1.1rem; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+    </style>
+</head>
+<body>
+
+    <div class="drawer-overlay" id="drawerOverlay"></div>
+
+    <header>
+        <button class="icon-btn" id="menuToggleBtn"><i class="fas fa-bars"></i></button>
+        <div class="logo"><i class="fas fa-piggy-bank"></i> <span>Naija Kolo</span></div>
+        <div style="width:38px;"></div>
+    </header>
+
+    <!-- NAVIGATION CONSOLE DRAWER -->
+    <nav class="nav-drawer" id="navDrawer">
+        <div class="drawer-header"><h3>Account Engine</h3><button class="icon-btn" id="menuCloseBtn"><i class="fas fa-times"></i></button></div>
+        <div class="drawer-links">
+            <a href="dashboard.html" class="drawer-item"><i class="fas fa-chart-pie"></i> Dashboard</a>
+            <a href="plans.html" class="drawer-item active"><i class="fas fa-plus-circle"></i> Create Plan</a>
+            <a href="kyc.html" class="drawer-item"><i class="fas fa-user-shield"></i> KYC Verification</a>
+            <a href="settings.html" class="drawer-item"><i class="fas fa-sliders-h"></i> Settings</a>
+            <a href="about.html" class="drawer-item"><i class="fas fa-info-circle"></i> About Us</a>
+            <a href="support.html" class="drawer-item"><i class="fas fa-headset"></i> Support</a>
+            <a href="terms.html" class="drawer-item"><i class="fas fa-file-contract"></i> Terms & Conditions</a>
+            <a href="privacy.html" class="drawer-item"><i class="fas fa-shield-alt"></i> Privacy Policy</a>
+        </div>
+    </nav>
+
+    <main>
+        <!-- REGULATORY POLICY NOTICE -->
+        <section class="rules-banner full-span">
+            <div class="rules-title"><i class="fas fa-shield-halved"></i> Structural Liquidation Architecture</div>
+            <div class="rules-text">
+                • <strong>Target Vault Payouts:</strong> Matched or matured milestones attract a standard operational merchant processing deduction of 5%.<br>
+                • <strong>🔒 Locked Positions:</strong> Items created inside the KoloLock vault configurations are hard-bound until maturity timelines are completely met.<br>
+                • <strong>🍃 Flex Early Outbounds:</strong> Prematurely breaking an open KoloFlex contract enforces an instant structural early settlement penalty of 15%.
+            </div>
+        </section>
+
+        <!-- PORTAL GENERATION CORE UI -->
+        <section class="form-card">
+            <h2><i class="fas fa-folder-plus"></i> Establish Wealth Target</h2>
+            <form id="createPlanForm">
+                <div class="form-grid">
+                    <div class="form-group full-width">
+                        <label>Savings Target Component Title</label>
+                        <input type="text" id="planTitle" class="form-control" placeholder="e.g., Prime Real Estate, Vehicle Lock-up" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Target Amount (NGN)</label>
+                        <input type="number" id="planTargetAmount" class="form-control" placeholder="₦0.00" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Target Expiry Date</label>
+                        <input type="date" id="planTargetDate" class="form-control" required>
+                    </div>
+                    <div class="form-group full-width">
+                        <label>Structural Locked-Vault Strategy</label>
+                        <select id="planType" class="form-control" required>
+                            <option value="flex">KoloFlex — Partial access allowed (15% Early Liquidation penalty)</option>
+                            <option value="lock">KoloLock — Immutable Lock (Strictly zero early liquidation option)</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="submit-btn">Deploy Structural Savings Target <i class="fas fa-arrow-right"></i></button>
+            </form>
+        </section>
+
+        <!-- MONITORED CORE PORTFOLIO ASSETS -->
+        <div class="portfolio-section">
+            <div class="section-header"><h2><i class="fas fa-wallet" style="color:var(--primary-neon);"></i> Active Portfolios</h2></div>
+            <section id="plansTargetWrapper">
+                <div style="color:var(--text-secondary); text-align:center; padding:32px;"><i class="fas fa-circle-notch fa-spin"></i> Instantiating environment records...</div>
+            </section>
+        </div>
+    </main>
+
+    <!-- UNIFIED HIGH SECURITY DISBURSEMENT MODAL WINDOW -->
+    <div class="secure-modal" id="disburseModal">
+        <div class="modal-header"><h3 style="color:var(--danger-neon);"><i class="fas fa-lock"></i> Authorize Payout Settlement</h3><button class="icon-btn" id="closeModalBtn"><i class="fas fa-times"></i></button></div>
+        <form id="secureWithdrawalForm">
+            <input type="hidden" id="modalPlanId">
+            <div class="form-group" style="background:rgba(255,82,82,0.04); padding:12px; border-radius:10px; border:1px solid rgba(255,82,82,0.1); font-size:0.8rem; color:var(--text-secondary); line-height:1.4;">
+                <i class="fas fa-info-circle" style="color:var(--danger-neon);"></i> Automatic settlement validations will ensure that outbound payout account names match your system profile identity flawlessly.
+            </div>
+            <div class="form-group" style="margin-top:12px;"><label>Destination Routing Bank Code</label>
+                <select id="wdBankCode" class="form-control" required>
+                    <option value="058">Guaranty Trust Bank (GTB)</option><option value="011">First Bank of Nigeria</option><option value="044">Access Bank</option><option value="033">United Bank for Africa (UBA)</option><option value="999992">OPay Digital Services</option><option value="999991">PalmPay</option>
+                </select>
+            </div>
+            <div class="form-group" style="margin-top:12px;"><label>10-Digit Destination Account Number</label><input type="text" id="wdAccountNumber" class="form-control" maxlength="10" placeholder="0000000000" required></div>
+            <button type="submit" class="submit-btn" style="background-color:var(--danger-neon); color:white; margin-top:16px;">Verify & Finalize Disbursal <i class="fas fa-shield-alt"></i></button>
+        </form>
+    </div>
+
+    <script>
+        const SUPABASE_URL = "https://mgihqnbcbjzingerefrk.supabase.co";
+        const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
+        const DYNAMIC_ACTION_ENDPOINT = "https://mgihqnbcbjzingerefrk.supabase.co/functions/v1/dynamic-action";
+
+        const supabaseInstance = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        const menuToggleBtn = document.getElementById('menuToggleBtn');
+        const menuCloseBtn = document.getElementById('menuCloseBtn');
+        const navDrawer = document.getElementById('navDrawer');
+        const drawerOverlay = document.getElementById('drawerOverlay');
+        const disburseModal = document.getElementById('disburseModal');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+
+        menuToggleBtn.onclick = () => { navDrawer.classList.add('open'); drawerOverlay.style.display = 'block'; }
+        menuCloseBtn.onclick = () => { navDrawer.classList.remove('open'); drawerOverlay.style.display = 'none'; }
+        closeModalBtn.onclick = () => { disburseModal.classList.remove('active'); drawerOverlay.style.display = 'none'; }
+        drawerOverlay.onclick = () => { navDrawer.classList.remove('open'); disburseModal.classList.remove('active'); drawerOverlay.style.display = 'none'; }
+
+        async function syncPlansView() {
+            const { data: { session } } = await supabaseInstance.auth.getSession();
+            if (!session) { window.location.href = "login.html"; return; }
+
+            try {
+                const res = await fetch(`${DYNAMIC_ACTION_ENDPOINT}?action=fetch_dashboard`, { 
+                    method: 'GET', 
+                    headers: { 'Authorization': `Bearer ${session.access_token}` } 
+                });
+                const metrics = await res.json();
+                
+                const wrapper = document.getElementById('plansTargetWrapper');
+                wrapper.innerHTML = '';
+
+                if(!metrics.plans || metrics.plans.length === 0) {
+                    wrapper.innerHTML = `<div style="color:var(--text-secondary); text-align:center; padding:32px; font-size:0.9rem;">No active savings targets deployed. Create one above!</div>`;
+                    return;
+                }
+
+                metrics.plans.forEach(p => {
+                    wrapper.innerHTML += `
+                        <div class="plan-item-card">
+                            <div class="plan-item-header">
+                                <span class="plan-title-text">${p.title}</span>
+                                <span class="plan-tag tag-${p.plan_type_enum}">${p.plan_type_enum}</span>
+                            </div>
+                            <div style="font-size:1.35rem; font-weight:800; letter-spacing:-0.01em;">₦${p.current_amount.toLocaleString()} <span style="font-size:0.8rem; color:var(--text-secondary); font-weight:400;">saved</span></div>
+                            <div class="progress-track"><div class="progress-fill" style="width:${p.percent_saved}%;"></div></div>
+                            <div class="plan-meta"><span>Goal: ₦${p.target_amount.toLocaleString()}</span><span>${p.percent_saved}%</span></div>
+                            <div class="action-button-row">
+                                <button class="sub-action-btn btn-allocate" onclick="allocatePrompt('${p.id}')"><i class="fas fa-wallet"></i> Fund</button>
+                                <button class="sub-action-btn btn-withdraw" onclick="openWithdrawModal('${p.id}')"><i class="fas fa-paper-plane"></i> Liquidate</button>
+                            </div>
+                        </div>
+                    `;
+                });
+            } catch(e) {
+                console.error(e);
+            }
+        }
+
+        window.allocatePrompt = async (planId) => {
+            const amount = prompt("Specify budget allocation value from Liquid balance (₦):");
+            if (!amount || isNaN(amount) || Number(amount) <= 0) return;
+            const { data: { session } } = await supabaseInstance.auth.getSession();
+            
+            const res = await fetch(DYNAMIC_ACTION_ENDPOINT, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'allocate', planId, amount: Number(amount) })
+            });
+            if (res.ok) { alert("Vault capitalization processed successfully."); syncPlansView(); }
+        };
+
+        document.getElementById('createPlanForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const { data: { session } } = await supabaseInstance.auth.getSession();
+            
+            const { error } = await supabaseInstance.from('savings_plans').insert({
+                user_id: session.user.id,
+                title: document.getElementById('planTitle').value,
+                target_amount: Number(document.getElementById('planTargetAmount').value),
+                target_date: document.getElementById('planTargetDate').value,
+                plan_type_enum: document.getElementById('planType').value,
+                current_amount: 0,
+                status: 'active'
+            });
+
+            if (!error) { 
+                alert("Target instantiated successfully!"); 
+                document.getElementById('createPlanForm').reset();
+                syncPlansView(); 
+            } else {
+                alert(error.message);
+            }
+        };
+
+        window.openWithdrawModal = (planId) => {
+            document.getElementById('modalPlanId').value = planId;
+            drawerOverlay.style.display = 'block';
+            disburseModal.classList.add('active');
+        };
+
+        document.getElementById('secureWithdrawalForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const { data: { session } } = await supabaseInstance.auth.getSession();
+            
+            const payload = {
+                action: 'withdraw',
+                planId: document.getElementById('modalPlanId').value,
+                bankCode: document.getElementById('wdBankCode').value,
+                accountNumber: document.getElementById('wdAccountNumber').value
+            };
+
+            const res = await fetch(DYNAMIC_ACTION_ENDPOINT, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            
+            const out = await res.json();
+            alert(out.message);
+            if (out.success) { disburseModal.classList.remove('active'); drawerOverlay.style.display = 'none'; syncPlansView(); }
+        };
+
+        window.onload = syncPlansView;
+    </script>
+</body>
+</html>

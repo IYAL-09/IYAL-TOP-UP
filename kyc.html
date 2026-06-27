@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Identity Compliance Framework — Naija Kolo</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- Supabase JS Library CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap');
+        
+        :root {
+            --primary: #10b981; 
+            --border: rgba(255, 255, 255, 0.08);
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #0F172A;
+            padding-top: 100px; 
+        }
+
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 75px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 25px;
+            background: rgba(6, 17, 10, .92);
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid var(--border);
+            z-index: 1000;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        .logo i {
+            color: var(--primary);
+            font-size: 1.8rem;
+        }
+
+        .mono-text {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .blur-glow {
+            background: radial-gradient(circle at center, rgba(16, 185, 129, 0.06) 0%, transparent 70%);
+        }
+
+        .fade-element {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .hidden-state {
+            display: none !important;
+            opacity: 0;
+        }
+    </style>
+</head>
+<body class="min-h-screen text-slate-100 flex flex-col items-center p-4 selection:bg-emerald-500 selection:text-slate-900 relative overflow-x-hidden">
+
+    <!-- Brand Header Component -->
+    <header>
+        <div class="logo">
+            <i class="fas fa-piggy-bank"></i>
+            <span>Naija Kolo</span>
+        </div>
+    </header>
+
+    <!-- Ambient Glow Accent Layer -->
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] blur-glow pointer-events-none z-0"></div>
+
+    <!-- Toast Notification Banner for Quick Copy feedback -->
+    <div id="toastNotification" class="fixed top-24 right-6 bg-slate-900 border border-emerald-500/30 text-emerald-400 px-5 py-3 rounded-xl shadow-2xl text-xs font-semibold z-50 tracking-wide hidden-state transition-all transform translate-y-2 opacity-0 flex items-center gap-2">
+        <i class="fa-solid fa-circle-check"></i> Account number copied to clipboard
+    </div>
+
+    <!-- Main Application Container -->
+    <div class="w-full max-w-xl bg-slate-900/40 border border-slate-800/80 rounded-3xl p-6 sm:p-10 shadow-2xl backdrop-blur-xl z-10 relative mt-4">
+        
+        <!-- Corporate Header Section -->
+        <div class="flex flex-col items-center mb-8 border-b border-slate-800/60 pb-6">
+            <h2 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+                <i class="fa-solid fa-shield-halved text-emerald-400 text-base"></i> Security & Compliance Check
+            </h2>
+            <p class="text-slate-400 text-sm mt-1.5 text-center leading-relaxed">Instantly link your profile to verify identity credentials and generate your local clearing funding channels.</p>
+        </div>
+
+        <!-- System Authentication Gate Block (Shown if user is logged out) -->
+        <div id="authGate" class="text-center py-6 hidden-state">
+            <p class="text-slate-400 text-sm mb-5">Please authenticate through your account access gateway to proceed with Identity Verification.</p>
+            <a href="/login" class="inline-block bg-emerald-500 text-slate-950 font-bold px-6 py-3 rounded-xl text-sm transition-all shadow-lg shadow-emerald-500/10">
+                Sign In to Account
+            </a>
+        </div>
+
+        <!-- Core Verification Application Module (Shown when logged in) -->
+        <div id="appInterface">
+            
+            <!-- Dynamic Status Tracking Row -->
+            <div class="mb-6">
+                <div class="flex items-center justify-between p-4 rounded-xl bg-slate-950/60 border border-slate-800/80">
+                    <span class="text-sm font-medium text-slate-400">Verification Engine Status:</span>
+                    <span id="kycBadge" class="text-[11px] font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-slate-800 text-slate-400 border border-slate-700">
+                        Checking Status...
+                    </span>
+                </div>
+            </div>
+
+            <!-- Contextual Status Feedback Banner -->
+            <div id="statusBanner" class="p-4 rounded-xl text-sm border mb-6 items-start gap-3 hidden-state fade-element">
+                <span id="bannerIcon" class="font-bold mt-0.5"></span>
+                <p id="bannerText" class="font-medium"></p>
+            </div>
+
+            <!-- SUBMISSION BLOCK: Form Interface -->
+            <form id="kycForm" class="space-y-6 hidden-state fade-element" onsubmit="handleVerificationSubmit(event)">
+                
+                <!-- Zero-Storage Privacy Disclaimer Statement -->
+                <div class="p-4 bg-emerald-500/5 rounded-2xl border border-emerald-500/10 flex items-start gap-3.5">
+                    <i class="fa-solid fa-user-lock text-emerald-400 text-base mt-0.5"></i>
+                    <div class="space-y-0.5">
+                        <h4 class="text-xs font-bold text-emerald-400 tracking-wide uppercase">Data Privacy Zero-Storage Clause</h4>
+                        <p class="text-[12px] text-slate-400 leading-relaxed">We respect your absolute privacy. Your identification keys (BVN/NIN) are never saved, cached, or stored on our servers. They are streamed over high-grade encrypted channels directly to our regulatory processing partner, Monnify.</p>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2.5">Select Document Type</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button type="button" id="btnBVN" onclick="setKycType('BVN')" class="p-3.5 rounded-xl border text-sm font-semibold transition-all flex items-center justify-center bg-emerald-500/10 border-emerald-500 text-emerald-400 shadow-inner cursor-pointer w-full">
+                            BVN Document
+                        </button>
+                        <button type="button" id="btnNIN" onclick="setKycType('NIN')" class="p-3.5 rounded-xl border text-sm font-medium transition-all flex items-center justify-center bg-slate-950/40 border-slate-800 text-slate-400 hover:border-slate-700 cursor-pointer w-full">
+                            NIN Document
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="identityNumber" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                        Provide Your 11-Digit <span id="lblDocumentType">BVN</span> Identification String
+                    </label>
+                    <input
+                        id="identityNumber"
+                        type="text"
+                        inputmode="numeric"
+                        maxlength="11"
+                        placeholder="Ex: Enter 11-digit number"
+                        oninput="this.value = this.value.replace(/\D/g, '')"
+                        class="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-3.5 text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 transition-all text-base tracking-widest mono-text"
+                        required
+                    />
+                </div>
+
+                <button
+                    type="submit"
+                    id="submitBtn"
+                    class="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-bold py-4 rounded-xl transition-all shadow-lg shadow-emerald-500/5 active:scale-[0.99] cursor-pointer text-sm tracking-wide"
+                >
+                    Initialize Verification Framework
+                </button>
+            </form>
+
+            <!-- RESULT BLOCK: Live Virtual Accounts Listing -->
+            <div id="accountsDashboard" class="mt-4 space-y-5 hidden-state fade-element">
+                <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Allocated Virtual Clearing Channels</h3>
+                
+                <div id="accountsWrapper" class="grid gap-3">
+                    <!-- Dynamic Account Rows are injected here by JavaScript -->
+                </div>
+
+                <!-- Post-Verification System Action Navigation -->
+                <div class="pt-2">
+                    <a href="/dashboard.html" class="w-full bg-slate-800 hover:bg-slate-700/80 text-white font-semibold py-4 rounded-xl transition-all border border-slate-700/60 text-center block text-sm shadow-md">
+                        Proceed to Main Dashboard <i class="fa-solid fa-arrow-right ml-2 text-xs text-emerald-400"></i>
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Core Logic Integration Script -->
+    <script>
+        const SUPABASE_URL = "https://mgihqnbcbjzingerefrk.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1naWhxbmJjYmp6aW5nZXJlZnJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NjA4NTUsImV4cCI6MjA5ODEzNjg1NX0.r4lCuJZjIaBxXHYlmzPf5ho-TUZnxr4XA__g_vdiEMU"; // Insert your public anon key here
+        
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let activeKycType = 'BVN';
+        let currentUserSession = null;
+        let redirectTimer = null;
+
+        const uiAuthGate = document.getElementById('authGate');
+        const uiAppInterface = document.getElementById('appInterface');
+        const uiKycBadge = document.getElementById('kycBadge');
+        const uiKycForm = document.getElementById('kycForm');
+        const uiAccountsDashboard = document.getElementById('accountsDashboard');
+        const uiAccountsWrapper = document.getElementById('accountsWrapper');
+        const uiStatusBanner = document.getElementById('statusBanner');
+        const uiBannerIcon = document.getElementById('bannerIcon');
+        const uiBannerText = document.getElementById('bannerText');
+        const uiIdentityInput = document.getElementById('identityNumber');
+        const uiSubmitBtn = document.getElementById('submitBtn');
+        const uiToast = document.getElementById('toastNotification');
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            const { data: { session } } = await _supabase.auth.getSession();
+            evaluateSessionState(session);
+
+            _supabase.auth.onAuthStateChange((_event, session) => {
+                evaluateSessionState(session);
+            });
+        });
+
+        function evaluateSessionState(session) {
+            currentUserSession = session;
+            if (!session) {
+                uiAuthGate.classList.remove('hidden-state');
+                uiAppInterface.classList.add('hidden-state');
+            } else {
+                uiAuthGate.classList.add('hidden-state');
+                uiAppInterface.classList.remove('hidden-state');
+                synchronizeKycDataRows(session.user.id);
+            }
+        }
+
+        function setKycType(type) {
+            activeKycType = type;
+            document.getElementById('lblDocumentType').innerText = type;
+            uiIdentityInput.placeholder = `Ex: Enter your 11-digit ${type}`;
+            uiIdentityInput.value = '';
+
+            const btnBVN = document.getElementById('btnBVN');
+            const btnNIN = document.getElementById('btnNIN');
+
+            if(type === 'BVN') {
+                btnBVN.className = "p-3.5 rounded-xl border text-sm font-semibold transition-all flex items-center justify-center bg-emerald-500/10 border-emerald-500 text-emerald-400 shadow-inner cursor-pointer w-full";
+                btnNIN.className = "p-3.5 rounded-xl border text-sm font-medium transition-all flex items-center justify-center bg-slate-950/40 border-slate-800 text-slate-400 hover:border-slate-700 cursor-pointer w-full";
+            } else {
+                btnNIN.className = "p-3.5 rounded-xl border text-sm font-semibold transition-all flex items-center justify-center bg-emerald-500/10 border-emerald-500 text-emerald-400 shadow-inner cursor-pointer w-full";
+                btnBVN.className = "p-3.5 rounded-xl border text-sm font-medium transition-all flex items-center justify-center bg-slate-950/40 border-slate-800 text-slate-400 hover:border-slate-700 cursor-pointer w-full";
+            }
+        }
+
+        async function synchronizeKycDataRows(userId) {
+            try {
+                const { data: profile, error } = await _supabase
+                    .from('kyc_profiles')
+                    .select('status, verification_error')
+                    .eq('id', userId)
+                    .maybeSingle();
+
+                if (error) throw error;
+
+                const status = profile ? profile.status : 'unverified';
+                renderUiStatusState(status, profile?.verification_error);
+
+                if (status === 'verified') {
+                    fetchAllocatedVirtualAccounts(userId);
+                }
+            } catch (err) {
+                console.error("Data tracking failure:", err.message);
+                renderUiStatusState('unverified');
+            }
+        }
+
+        async function fetchAllocatedVirtualAccounts(userId) {
+            const { data: accounts } = await _supabase
+                .from('monnify_accounts')
+                .select('*')
+                .eq('user_id', userId);
+
+            if (accounts && accounts.length > 0) {
+                uiAccountsWrapper.innerHTML = '';
+                accounts.forEach(acc => {
+                    const row = document.createElement('div');
+                    row.className = "p-4 rounded-xl bg-slate-950/40 border border-slate-800/80 flex items-center justify-between hover:border-slate-700/80 transition-all group";
+                    row.innerHTML = `
+                        <div class="space-y-1">
+                            <span class="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">${acc.bank_name}</span>
+                            <p class="text-xl font-bold text-white tracking-wider mono-text">${acc.account_number}</p>
+                            <p class="text-xs text-slate-500 font-medium">${acc.account_name}</p>
+                        </div>
+                        <button onclick="copyToClipboard('${acc.account_number}')" class="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-white rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 shadow-sm">
+                            <i class="fa-regular fa-copy"></i> Copy
+                        </button>
+                    `;
+                    uiAccountsWrapper.appendChild(row);
+                });
+                uiAccountsDashboard.classList.remove('hidden-state');
+            }
+        }
+
+        function renderUiStatusState(status, errorReason = "") {
+            uiKycBadge.innerText = status;
+            uiKycBadge.className = "text-[11px] font-bold uppercase tracking-wider px-3 py-1 rounded-full";
+            uiKycForm.classList.add('hidden-state');
+            uiAccountsDashboard.classList.add('hidden-state');
+            showAlertBanner(false);
+
+            if (status === 'verified') {
+                uiKycBadge.classList.add('bg-emerald-500/10', 'text-emerald-400', 'border', 'border-emerald-500/20');
+                // Run automated redirect procedure
+                initializeAutoRedirectSequence();
+            } else if (status === 'pending') {
+                uiKycBadge.classList.add('bg-amber-500/10', 'text-amber-400', 'border', 'border-amber-500/20');
+                showAlertBanner(true, 'info', 'Validation routing under execution. Holding wire channels clear...');
+            } else if (status === 'failed') {
+                uiKycBadge.classList.add('bg-rose-500/10', 'text-rose-400', 'border', 'border-rose-500/20');
+                showAlertBanner(true, 'error', errorReason || 'Identity verification rejected by clearing house gateway.');
+                uiKycForm.classList.remove('hidden-state');
+            } else {
+                uiKycBadge.classList.add('bg-slate-800', 'text-slate-400', 'border', 'border-slate-700');
+                uiKycForm.classList.remove('hidden-state');
+            }
+        }
+
+        function initializeAutoRedirectSequence() {
+            let secondsLeft = 5;
+            
+            const updateBannerText = () => {
+                showAlertBanner(true, 'success', `Identity verification successful! Redirecting you to your account dashboard automatically in ${secondsLeft}s...`);
+            };
+
+            updateBannerText();
+
+            clearInterval(redirectTimer);
+            redirectTimer = setInterval(() => {
+                secondsLeft--;
+                if (secondsLeft <= -100) {
+                    clearInterval(redirectTimer);
+                    window.location.href = '/dashboard.html';
+                } else {
+                    updateBannerText();
+                }
+            }, 1000);
+        }
+
+        function showAlertBanner(show, type = '', text = '') {
+            if (!show) {
+                uiStatusBanner.className = "hidden-state";
+                return;
+            }
+            uiStatusBanner.className = "p-4 rounded-xl text-sm border mb-6 flex items-start gap-3 src-element";
+            uiBannerText.innerText = text;
+
+            if (type === 'success') {
+                uiStatusBanner.classList.add('bg-emerald-500/5', 'border-emerald-500/20', 'text-emerald-300');
+                uiBannerIcon.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-400"></i>';
+            } else if (type === 'error') {
+                uiStatusBanner.classList.add('bg-rose-500/5', 'border-rose-500/20', 'text-rose-300');
+                uiBannerIcon.innerHTML = '<i class="fa-solid fa-circle-xmark text-rose-400"></i>';
+            } else {
+                uiStatusBanner.classList.add('bg-amber-500/5', 'border-amber-500/20', 'text-amber-300');
+                uiBannerIcon.innerHTML = '<i class="fa-solid fa-spinner animate-spin text-amber-400"></i>';
+            }
+        }
+
+        async function handleVerificationSubmit(e) {
+            e.preventDefault();
+            const identityString = uiIdentityInput.value;
+
+            if (identityString.length !== 11) {
+                showAlertBanner(true, 'error', 'Identity records must conform strictly to an 11-digit parameters layout.');
+                return;
+            }
+
+            uiSubmitBtn.disabled = true;
+            uiSubmitBtn.innerText = "Processing Validation Protocols...";
+            renderUiStatusState('pending');
+
+            try {
+                const { data, error } = await _supabase.functions.invoke('verify-kyc-identity', {
+                    method: 'POST',
+                    body: { kycType: activeKycType, identityNumber: identityString }
+                });
+
+                if (error || (data && !data.success)) {
+                    throw new Error(error?.message || data?.message || "Verification gateway processing timeout.");
+                }
+
+                renderUiStatusState('verified');
+                fetchAllocatedVirtualAccounts(currentUserSession.user.id);
+
+            } catch (err) {
+                renderUiStatusState('failed', err.message);
+            } finally {
+                uiSubmitBtn.disabled = false;
+                uiSubmitBtn.innerText = "Initialize Verification Framework";
+            }
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                uiToast.classList.remove('hidden-state');
+                setTimeout(() => {
+                    uiToast.classList.remove('opacity-0', 'translate-y-2');
+                }, 50);
+
+                setTimeout(() => {
+                    uiToast.classList.add('opacity-0', 'translate-y-2');
+                    setTimeout(() => uiToast.classList.add('hidden-state'), 300);
+                }, 3500);
+            }).catch(err => {
+                console.error("Clipboard copy failure: ", err);
+            });
+        }
+    </script>
+</body>
+</html>
